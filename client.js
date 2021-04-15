@@ -515,7 +515,7 @@ async function invite(evt) {
 
     try {
       webcamStream.getTracks().forEach(
-        transceiver = track => myPeerConnection.addTrack(track, {streams: [webcamStream]})
+        transceiver = track => myPeerConnection.addTransceiver(track, {streams: [webcamStream]})
       );
     } catch(err) {
       handleGetUserMediaError(err);
