@@ -623,7 +623,14 @@ async function handleVideoOfferMsg(msg) {
     sdp: myPeerConnection.localDescription,
   });
 }
+//remote video
+const remoteStream = MediaStream();
+const remoteVideo = document.querySelector('#remote_video');
+remoteVideo.srcObject = remoteStream;
 
+myPeerConnection.addEventListener('track', async (event) => {
+    remoteStream.addTrack(event.track, remoteStream);
+});
 // Responds to the "video-answer" message sent to the caller
 // once the callee has decided to accept our request to talk.
 
