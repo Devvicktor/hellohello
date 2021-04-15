@@ -40,9 +40,13 @@ var clientID = 0;
 var mediaConstraints = {
   audio: true, // We want an audio track
   video: {
-    aspectRatio: {
-      ideal: 1.333333, // 3:2 aspect is preferred
+    frameRate: 24,
+    width: {
+      min: 480,
+      max: 1280,
+      ideal: 720,
     },
+    aspectRatio: 1.333,
   },
 };
 
@@ -299,8 +303,6 @@ async function handleNegotiationNeededEvent() {
 //
 // In our case, we're just taking the first stream found and attaching
 // it to the <video> element for incoming media.
-
-
 
 // Handles |icecandidate| events by forwarding the specified
 // ICE candidate (created by our local ICE agent) to the other
@@ -595,12 +597,15 @@ async function handleVideoOfferMsg(msg) {
     // Add the camera stream to the RTCPeerConnection
 
     try {
-      webcamStream.getTracks().forEach(
-        (transceiver = (track) =>
-          myPeerConnection.addTransceiver(track, { streams: [webcamStream] })),
-
-        console.log(transceiver.direction)
-      );
+      webcamStream
+        .getTracks()
+        .forEach(
+          (transceiver = (track) =>
+            myPeerConnection.addTransceiver(track, {
+              streams: [webcamStream],
+            })),
+          console.log(transceiver.direction)
+        );
     } catch (err) {
       handleGetUserMediaError(err);
     }
@@ -620,7 +625,6 @@ async function handleVideoOfferMsg(msg) {
   });
 }
 //remote video
-
 
 // Responds to the "video-answer" message sent to the caller
 // once the callee has decided to accept our request to talk.
@@ -651,10 +655,10 @@ async function handleNewICECandidateMsg(msg) {
 }
 //bsdhgshfghsdgfhdsgfhds
 function handleTrackEvent(event) {
-    log("*** Track event");
-    document.getElementById("received_video").srcObject = event.streams[0];
-    document.getElementById("hangup-button").disabled = false;
-  }
+  log("*** Track event");
+  document.getElementById("received_video").srcObject = event.streams[0];
+  document.getElementById("hangup-button").disabled = false;
+}
 
 // Handle errors which occur when trying to access the local media
 // hardware; that is, exceptions thrown by getUserMedia(). The two most
