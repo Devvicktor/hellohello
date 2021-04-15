@@ -594,7 +594,7 @@ async function handleVideoOfferMsg(msg) {
       return;
     }
 
-    document.getElementById("local_video").srcObject = webcamStream;
+    document.getElementById("remote_video").srcObject = webcamStream;
 
     // Add the camera stream to the RTCPeerConnection
 
