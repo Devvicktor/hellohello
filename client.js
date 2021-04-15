@@ -38,19 +38,19 @@ var clientID = 0;
 //
 
 var mediaConstraints = {
-  audio: true,            // We want an audio track
+  audio: true, // We want an audio track
   video: {
     aspectRatio: {
-      ideal: 1.333333     // 3:2 aspect is preferred
-    }
-  }
+      ideal: 1.333333, // 3:2 aspect is preferred
+    },
+  },
 };
 
 var myUsername = null;
-var targetUsername = null;      // To store username of other peer
-var myPeerConnection = null;    // RTCPeerConnection
-var transceiver = null;         // RTCRtpTransceiver
-var webcamStream = null;        // MediaStream from webcam
+var targetUsername = null; // To store username of other peer
+var myPeerConnection = null; // RTCPeerConnection
+var transceiver = null; // RTCRtpTransceiver
+var webcamStream = null; // MediaStream from webcam
 
 // Output logging information to console.
 
@@ -89,7 +89,7 @@ function setUsername() {
     name: myUsername,
     date: Date.now(),
     id: clientID,
-    type: "username"
+    type: "username",
   });
 }
 
@@ -97,21 +97,21 @@ function setUsername() {
 
 function connect() {
   var serverUrl;
-  serverUrl = 'wss://messageithere.herokuapp.com/'
+  serverUrl = "wss://messageithere.herokuapp.com/";
 
   log(`Connecting to server: ${serverUrl}`);
   connection = new WebSocket(serverUrl, "json");
 
-  connection.onopen = function(evt) {
+  connection.onopen = function (evt) {
     document.getElementById("text").disabled = false;
     document.getElementById("send").disabled = false;
   };
 
-  connection.onerror = function(evt) {
+  connection.onerror = function (evt) {
     console.dir(evt);
-  }
+  };
 
-  connection.onmessage = function(evt) {
+  connection.onmessage = function (evt) {
     var chatBox = document.querySelector(".chatbox");
     var text = "";
     var msg = JSON.parse(evt.data);
@@ -120,27 +120,35 @@ function connect() {
     var time = new Date(msg.date);
     var timeStr = time.toLocaleTimeString();
 
-    switch(msg.type) {
+    switch (msg.type) {
       case "id":
         clientID = msg.id;
         setUsername();
         break;
 
       case "username":
-        text = "<b>User <em>" + msg.name + "</em> signed in at " + timeStr + "</b><br>";
+        text =
+          "<b>User <em>" +
+          msg.name +
+          "</em> signed in at " +
+          timeStr +
+          "</b><br>";
         break;
 
       case "message":
-        text = "(" + timeStr + ") <b>" + msg.name + "</b>: " + msg.text + "<br>";
+        text =
+          "(" + timeStr + ") <b>" + msg.name + "</b>: " + msg.text + "<br>";
         break;
 
       case "rejectusername":
         myUsername = msg.name;
-        text = "<b>Your username has been set to <em>" + myUsername +
+        text =
+          "<b>Your username has been set to <em>" +
+          myUsername +
           "</em> because the name you chose is in use.</b><br>";
         break;
 
-      case "userlist":      // Received an updated user list
+      case "userlist": // Received an updated user list
         handleUserlistMsg(msg);
         break;
 
@@ -148,11 +156,11 @@ function connect() {
       // signaling information during negotiations leading up to a video
       // call.
 
-      case "video-offer":  // Invitation and offer to chat
+      case "video-offer": // Invitation and offer to chat
         handleVideoOfferMsg(msg);
         break;
 
-      case "video-answer":  // Callee has answered our offer
+      case "video-answer": // Callee has answered our offer
         handleVideoAnswerMsg(msg);
         break;
 
@@ -188,7 +196,7 @@ function handleSendButton() {
     text: document.getElementById("text").value,
     type: "message",
     id: clientID,
-    date: Date.now()
+    date: Date.now(),
   };
   sendToServer(msg);
   document.getElementById("text").value = "";
@@ -218,14 +226,12 @@ async function createPeerConnection() {
   // STUN server.
 
   myPeerConnection = new RTCPeerConnection({
-    iceServers: [     // Information about ICE servers - Use your own!
+    iceServers: [
+      // Information about ICE servers - Use your own!
       {
-        urls: ['stun:stun.l.google.com:19302',
-            'stun:stun1.l.google.com:19302',
-            'stun:stun2.l.google.com:19302',
-            'stun:stun3.l.google.com:19302']
-      }
-    ]
+        urls: "stun:stun.l.google.com:19302",
+      },
+    ],
   });
 
   // Set up event handlers for the ICE negotiation process.
@@ -253,7 +259,7 @@ async function handleNegotiationNeededEvent() {
     // will be fired when the state stabilizes.
 
     if (myPeerConnection.signalingState != "stable") {
-      log("     -- The connection isn't stable yet; postponing...")
+      log("     -- The connection isn't stable yet; postponing...");
       return;
     }
 
@@ -270,12 +276,14 @@ async function handleNegotiationNeededEvent() {
       name: myUsername,
       target: targetUsername,
       type: "video-offer",
-      sdp: myPeerConnection.localDescription
+      sdp: myPeerConnection.localDescription,
     });
-  } catch(err) {
-    log("*** The following error occurred while handling the negotiationneeded event:");
+  } catch (err) {
+    log(
+      "*** The following error occurred while handling the negotiationneeded event:"
+    );
     reportError(err);
-  };
+  }
 }
 
 // Called by the WebRTC layer when events occur on the media tracks
@@ -309,7 +317,7 @@ function handleICECandidateEvent(event) {
     sendToServer({
       type: "new-ice-candidate",
       target: targetUsername,
-      candidate: event.candidate
+      candidate: event.candidate,
     });
   }
 }
@@ -320,9 +328,11 @@ function handleICECandidateEvent(event) {
 // This is called when the state of the ICE agent changes.
 
 function handleICEConnectionStateChangeEvent(event) {
-  log("*** ICE connection state changed to " + myPeerConnection.iceConnectionState);
+  log(
+    "*** ICE connection state changed to " + myPeerConnection.iceConnectionState
+  );
 
-  switch(myPeerConnection.iceConnectionState) {
+  switch (myPeerConnection.iceConnectionState) {
     case "closed":
     case "failed":
     case "disconnected":
@@ -339,8 +349,10 @@ function handleICEConnectionStateChangeEvent(event) {
 // browsers catch up with the latest version of the specification!
 
 function handleSignalingStateChangeEvent(event) {
-  log("*** WebRTC signaling state changed to: " + myPeerConnection.signalingState);
-  switch(myPeerConnection.signalingState) {
+  log(
+    "*** WebRTC signaling state changed to: " + myPeerConnection.signalingState
+  );
+  switch (myPeerConnection.signalingState) {
     case "closed":
       closeVideoCall();
       break;
@@ -358,7 +370,9 @@ function handleSignalingStateChangeEvent(event) {
 // console so you can see what's going on when playing with the sample.
 
 function handleICEGatheringStateChangeEvent(event) {
-  log("*** ICE gathering state changed to: " + myPeerConnection.iceGatheringState);
+  log(
+    "*** ICE gathering state changed to: " + myPeerConnection.iceGatheringState
+  );
 }
 
 // Given a message containing a list of usernames, this function
@@ -379,7 +393,7 @@ function handleUserlistMsg(msg) {
 
   // Add member names from the received list.
 
-  msg.users.forEach(function(username) {
+  msg.users.forEach(function (username) {
     var item = document.createElement("li");
     item.appendChild(document.createTextNode(username));
     item.addEventListener("click", invite, false);
@@ -415,7 +429,7 @@ function closeVideoCall() {
 
     // Stop all transceivers on the connection
 
-    myPeerConnection.getTransceivers().forEach(transceiver => {
+    myPeerConnection.getTransceivers().forEach((transceiver) => {
       transceiver.stop();
     });
 
@@ -425,7 +439,7 @@ function closeVideoCall() {
 
     if (localVideo.srcObject) {
       localVideo.pause();
-      localVideo.srcObject.getTracks().forEach(track => {
+      localVideo.srcObject.getTracks().forEach((track) => {
         track.stop();
       });
     }
@@ -464,7 +478,7 @@ function hangUpCall() {
   sendToServer({
     name: myUsername,
     target: targetUsername,
-    type: "hang-up"
+    type: "hang-up",
   });
 }
 
@@ -484,7 +498,9 @@ async function invite(evt) {
     // Don't allow users to call themselves, because weird.
 
     if (clickedUsername === myUsername) {
-      alert("I'm afraid I can't let you talk to yourself. That would be weird.");
+      alert(
+        "I'm afraid I can't let you talk to yourself. That would be weird."
+      );
       return;
     }
 
@@ -505,9 +521,11 @@ async function invite(evt) {
     // "preview" box (id "local_video").
 
     try {
-      webcamStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+      webcamStream = await navigator.mediaDevices.getUserMedia(
+        mediaConstraints
+      );
       document.getElementById("local_video").srcObject = webcamStream;
-    } catch(err) {
+    } catch (err) {
       handleGetUserMediaError(err);
       return;
     }
@@ -515,10 +533,13 @@ async function invite(evt) {
     // Add the tracks from the stream to the RTCPeerConnection
 
     try {
-      webcamStream.getTracks().forEach(
-        transceiver = track => myPeerConnection.addTransceiver(track, {streams: [webcamStream]})
-      );
-    } catch(err) {
+      webcamStream
+        .getTracks()
+        .forEach(
+          (transceiver = (track) =>
+            myPeerConnection.addTransceiver(track, { streams: [webcamStream] }))
+        );
+    } catch (err) {
       handleGetUserMediaError(err);
     }
   }
@@ -552,12 +573,12 @@ async function handleVideoOfferMsg(msg) {
     // Set the local and remove descriptions for rollback; don't proceed
     // until both return.
     await Promise.all([
-      myPeerConnection.setLocalDescription({type: "rollback"}),
-      myPeerConnection.setRemoteDescription(desc)
+      myPeerConnection.setLocalDescription({ type: "rollback" }),
+      myPeerConnection.setRemoteDescription(desc),
     ]);
     return;
   } else {
-    log ("  - Setting remote description");
+    log("  - Setting remote description");
     await myPeerConnection.setRemoteDescription(desc);
   }
 
@@ -565,8 +586,10 @@ async function handleVideoOfferMsg(msg) {
 
   if (!webcamStream) {
     try {
-      webcamStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
-    } catch(err) {
+      webcamStream = await navigator.mediaDevices.getUserMedia(
+        mediaConstraints
+      );
+    } catch (err) {
       handleGetUserMediaError(err);
       return;
     }
@@ -577,24 +600,27 @@ async function handleVideoOfferMsg(msg) {
 
     try {
       webcamStream.getTracks().forEach(
-        transceiver = track => myPeerConnection.addTransceiver(track, {streams: [webcamStream]}),
+        (transceiver = (track) =>
+          myPeerConnection.addTransceiver(track, { streams: [webcamStream] })),
 
         console.log(transceiver.direction)
       );
-    } catch(err) {
+    } catch (err) {
       handleGetUserMediaError(err);
     }
   }
 
   log("---> Creating and sending answer to caller");
 
-  await myPeerConnection.setLocalDescription(await myPeerConnection.createAnswer());
+  await myPeerConnection.setLocalDescription(
+    await myPeerConnection.createAnswer()
+  );
 
   sendToServer({
     name: myUsername,
     target: targetUsername,
     type: "video-answer",
-    sdp: myPeerConnection.localDescription
+    sdp: myPeerConnection.localDescription,
   });
 }
 
@@ -620,8 +646,8 @@ async function handleNewICECandidateMsg(msg) {
 
   log("*** Adding received ICE candidate: " + JSON.stringify(candidate));
   try {
-    await myPeerConnection.addIceCandidate(candidate)
-  } catch(err) {
+    await myPeerConnection.addIceCandidate(candidate);
+  } catch (err) {
     reportError(err);
   }
 }
@@ -635,10 +661,12 @@ async function handleNewICECandidateMsg(msg) {
 
 function handleGetUserMediaError(e) {
   log_error(e);
-  switch(e.name) {
+  switch (e.name) {
     case "NotFoundError":
-      alert("Unable to open your call because no camera and/or microphone" +
-            "were found.");
+      alert(
+        "Unable to open your call because no camera and/or microphone" +
+          "were found."
+      );
       break;
     case "SecurityError":
     case "PermissionDeniedError":
