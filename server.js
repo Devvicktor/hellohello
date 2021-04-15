@@ -189,16 +189,59 @@ if (!webServer) {
 // requests are handled by the main server on the box. If you
 // want to, you can return real HTML here and serve Web content.
 
-function handleWebRequest(request, response) {
-  log ("Received request for " + request.url);
-  response.writeHead(404);
-  response.end();
+function handleWebRequest(req, res) {
+
+    if(req.url.indexOf('.html') != -1){ //req.url has the pathname, check if it conatins '.html'
+
+        fs.readFile(__dirname + '/index.html', function (err, data) {
+          if (err) console.log(err);
+          res.writeHead(200, {'Content-Type': 'text/html'});
+          res.write(data);
+          res.end();
+        });
+
+      }
+
+      if(req.url.indexOf('.js') != -1){ //req.url has the pathname, check if it conatins '.js'
+
+        fs.readFile(__dirname + '/client.js', function (err, data) {
+          if (err) console.log(err);
+          res.writeHead(200, {'Content-Type': 'text/javascript'});
+          res.write(data);
+          res.end();
+        });
+
+      }
+      if(req.url.indexOf('.js') != -1){ //req.url has the pathname, check if it conatins '.js'
+
+        fs.readFile(__dirname + '/adapter.js.js', function (err, data) {
+          if (err) console.log(err);
+          res.writeHead(200, {'Content-Type': 'text/javascript'});
+          res.write(data);
+          res.end();
+        });
+
+      }
+
+      if(req.url.indexOf('.css') != -1){ //req.url has the pathname, check if it conatins '.css'
+
+        fs.readFile(__dirname + '/main.css', function (err, data) {
+          if (err) console.log(err);
+          res.writeHead(200, {'Content-Type': 'text/css'});
+          res.write(data);
+          res.end();
+        });
+
+      }
+  log ("Received request for " + req.url);
+  res.writeHead(404);
+  res.end();
 }
 
 // Spin up the HTTPS server on the port assigned to this sample.
 // This will be turned into a WebSocket port very shortly.
-
-webServer.listen(6503, function() {
+const port=process.env.PORT || 6503
+webServer.listen(port, function() {
   log("Server is listening on port 6503");
 });
 
