@@ -97,10 +97,7 @@ function setUsername() {
 
 function connect() {
   var serverUrl;
-  var scheme = "ws";
-
-
-  serverUrl = 'ws://messageithere.herokuapp.com/'
+  serverUrl = 'wss://messageithere.herokuapp.com/'
 
   log(`Connecting to server: ${serverUrl}`);
   connection = new WebSocket(serverUrl, "json");
