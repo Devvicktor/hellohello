@@ -535,7 +535,7 @@ async function invite(evt) {
       webcamStream = await navigator.mediaDevices.getUserMedia(
         mediaConstraints
       );
-      document.getElementById("local_video").srcObject = webcamStream;
+      document.getElementById("received_video").srcObject = webcamStream;
     } catch (err) {
       handleGetUserMediaError(err);
       return;
@@ -573,7 +573,7 @@ function handleVideoOfferMsg(msg) {
     })
     .then(function(stream) {
       localStream = stream;
-      document.getElementById("received_video").srcObject = localStream;
+      document.getElementById("local_video").srcObject = localStream;
 
       localStream.getTracks().forEach(track => myPeerConnection.addTrack(track, localStream));
     })
