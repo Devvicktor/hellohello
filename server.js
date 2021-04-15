@@ -1,41 +1,64 @@
-//#!/usr/bin/env node
-//
-// WebSocket chat server
-// Implemented using Node.js
-//
-// Requires the websocket module.
-//
-// WebSocket and WebRTC based multi-user chat sample with two-way video
-// calling, including use of TURN if applicable or necessary.
-//
-// This file contains the JavaScript code that implements the server-side
-// functionality of the chat system, including user ID management, message
-// reflection, and routing of private messages, including support for
-// sending through unknown JSON objects to support custom apps and signaling
-// for WebRTC.
-//
-// Requires Node.js and the websocket module (WebSocket-Node):
-//
-//  - http://nodejs.org/
-//  - https://github.com/theturtle32/WebSocket-Node
-//
-// To read about how this sample works:  http://bit.ly/webrtc-from-chat
-//
-// Any copyright is dedicated to the Public Domain.
-// http://creativecommons.org/publicdomain/zero/1.0/
 
-"use strict";
+var http = require("http");
+var fs = require("fs");
+var WebSocketServer = require("websocket").server;
 
-var http = require('http');
-var https = require('https');
-var fs = require('fs');
-var WebSocketServer = require('websocket').server;
+const webServer = http.createServer(
+  (req, res) => {
+    if (req.url === "/main.css") {
+      fs.readFile("./main.css", function (err, data) {
+        if (err) {
+          throw err;
+        }
+        res.writeHead(200, { "Content-Type": "text/css" });
+        res.write(data);
+        res.end();
+      });
+    } else if (req.url === "/adapter.js") {
+      fs.readFile("./adapter.js", function (err, data) {
+        if (err) {
+          throw err;
+        }
+        res.writeHead(200, { "Content-Type": "text/javascript" });
+        res.write(data);
+        res.end();
+      });
+    } else if (req.url === "/client.js") {
+      fs.readFile("./client.js", function (err, data) {
+        if (err) {
+          throw err;
+        }
+        res.writeHead(200, { "Content-Type": "text/javascript" });
+        res.write(data);
+        res.end();
+      });
+    } else if (req.url === "/server.js") {
+      fs.readFile("./server.js", function (err, data) {
+        if (err) {
+          throw err;
+        }
+        res.writeHead(200, { "Content-Type": "text/javascript" });
+        res.write(data);
+        res.end();
+      });
+    } else {
+      fs.readFile("./index.html", function (err, data) {
+        if (err) {
+          throw err;
+        }
+        res.writeHead(200, { "Content-Type": "text/html" });
+        res.write(data);
+        res.end();
+      });
 
-// Pathnames of the SSL key and certificate files to use for
-// HTTPS connections.
+  }
 
-const keyFilePath = "/certs/key.pem";
-const certFilePath = "/certs/cert.pem";
+  //   res.end();
+  });
+const port = process.env.PORT || 6503;
+webServer.listen(port, function () {
+  log("Server is listening on port 6503");
+});
 
 // Used for managing the text chat user list.
 
@@ -55,7 +78,7 @@ function log(text) {
 // where you do it. Just return false to refuse WebSocket connections given
 // the specified origin.
 function originIsAllowed(origin) {
-  return true;    // We will accept all connections
+  return true; // We will accept all connections
 }
 
 // Scans the list of users and see if the specified name is unique. If it is,
@@ -65,7 +88,7 @@ function isUsernameUnique(name) {
   var isUnique = true;
   var i;
 
-  for (i=0; i<connectionArray.length; i++) {
+  for (i = 0; i < connectionArray.length; i++) {
     if (connectionArray[i].username === name) {
       isUnique = false;
       break;
@@ -81,7 +104,7 @@ function sendToOneUser(target, msgString) {
   var isUnique = true;
   var i;
 
-  for (i=0; i<connectionArray.length; i++) {
+  for (i = 0; i < connectionArray.length; i++) {
     if (connectionArray[i].username === target) {
       connectionArray[i].sendUTF(msgString);
       break;
@@ -96,7 +119,7 @@ function getConnectionForID(id) {
   var connect = null;
   var i;
 
-  for (i=0; i<connectionArray.length; i++) {
+  for (i = 0; i < connectionArray.length; i++) {
     if (connectionArray[i].clientID === id) {
       connect = connectionArray[i];
       break;
@@ -112,13 +135,13 @@ function getConnectionForID(id) {
 function makeUserListMessage() {
   var userListMsg = {
     type: "userlist",
-    users: []
+    users: [],
   };
   var i;
 
   // Add the users to the list
 
-  for (i=0; i<connectionArray.length; i++) {
+  for (i = 0; i < connectionArray.length; i++) {
     userListMsg.users.push(connectionArray[i].username);
   }
 
@@ -134,122 +157,16 @@ function sendUserListToAll() {
   var userListMsgStr = JSON.stringify(userListMsg);
   var i;
 
-  for (i=0; i<connectionArray.length; i++) {
+  for (i = 0; i < connectionArray.length; i++) {
     connectionArray[i].sendUTF(userListMsgStr);
   }
 }
-
-
-// Try to load the key and certificate files for SSL so we can
-// do HTTPS (required for non-local WebRTC).
-
-var httpsOptions = {
-  key: null,
-  cert: null
-};
-
-try {
-  httpsOptions.key = fs.readFileSync(keyFilePath);
-  try {
-    httpsOptions.cert = fs.readFileSync(certFilePath);
-  } catch(err) {
-    httpsOptions.key = null;
-    httpsOptions.cert = null;
-  }
-} catch(err) {
-  httpsOptions.key = null;
-  httpsOptions.cert = null;
-}
-
-// If we were able to get the key and certificate files, try to
-// start up an HTTPS server.
-
-var webServer = null;
-
-try {
-  if (httpsOptions.key && httpsOptions.cert) {
-    webServer = https.createServer(httpsOptions, handleWebRequest);
-  }
-} catch(err) {
-  webServer = null;
-}
-
-if (!webServer) {
-  try {
-    webServer = http.createServer({}, handleWebRequest);
-  } catch(err) {
-    webServer = null;
-    log(`Error attempting to create HTTP(s) server: ${err.toString()}`);
-  }
-}
-
-
-// Our HTTPS server does nothing but service WebSocket
-// connections, so every request just returns 404. Real Web
-// requests are handled by the main server on the box. If you
-// want to, you can return real HTML here and serve Web content.
-
-function handleWebRequest(req, res) {
-
-    if(req.url.indexOf('.html') != -1){ //req.url has the pathname, check if it conatins '.html'
-
-        fs.readFile(__dirname + '/index.html', function (err, data) {
-          if (err) console.log(err);
-          res.writeHead(200, {'Content-Type': 'text/html'});
-          res.write(data);
-          res.end();
-        });
-
-      }
-
-      if(req.url.indexOf('.js') != -1){ //req.url has the pathname, check if it conatins '.js'
-
-        fs.readFile(__dirname + '/client.js', function (err, data) {
-          if (err) console.log(err);
-          res.writeHead(200, {'Content-Type': 'text/javascript'});
-          res.write(data);
-          res.end();
-        });
-
-      }
-      if(req.url.indexOf('.js') != -1){ //req.url has the pathname, check if it conatins '.js'
-
-        fs.readFile(__dirname + '/adapter.js', function (err, data) {
-          if (err) console.log(err);
-          res.writeHead(200, {'Content-Type': 'text/javascript'});
-          res.write(data);
-          res.end();
-        });
-
-      }
-
-      if(req.url.indexOf('/main.css') != -1){ //req.url has the pathname, check if it conatins '.css'
-
-        fs.readFile(__dirname + '/main.css', function (err, data) {
-          if (err) console.log(err);
-          res.writeHead(200, {'Content-Type': 'text/css'});
-          res.write(data);
-          res.end();
-        });
-
-      }
-  log ("Received request for " + req.url);
-  res.writeHead(404);
-  res.end();
-}
-
-// Spin up the HTTPS server on the port assigned to this sample.
-// This will be turned into a WebSocket port very shortly.
-const port=process.env.PORT || 6503
-webServer.listen(port, function() {
-  log("Server is listening on port 6503");
-});
 
 // Create the WebSocket server by converting the HTTPS server into one.
 
 var wsServer = new WebSocketServer({
   httpServer: webServer,
-  autoAcceptConnections: false
+  autoAcceptConnections: false,
 });
 
 if (!wsServer) {
@@ -260,7 +177,7 @@ if (!wsServer) {
 // called whenever a user connects to the server's port using the
 // WebSocket protocol.
 
-wsServer.on('request', function(request) {
+wsServer.on("request", function (request) {
   if (!originIsAllowed(request.origin)) {
     request.reject();
     log("Connection from " + request.origin + " rejected.");
@@ -284,7 +201,7 @@ wsServer.on('request', function(request) {
 
   var msg = {
     type: "id",
-    id: connection.clientID
+    id: connection.clientID,
   };
   connection.sendUTF(JSON.stringify(msg));
 
@@ -293,8 +210,8 @@ wsServer.on('request', function(request) {
   // users, a private message (text or signaling) for one user, or a command
   // to the server.
 
-  connection.on('message', function(message) {
-    if (message.type === 'utf8') {
+  connection.on("message", function (message) {
+    if (message.type === "utf8") {
       log("Received Message: " + message.utf8Data);
 
       // Process incoming data.
@@ -309,11 +226,11 @@ wsServer.on('request', function(request) {
       // Messages with a "target" property are sent only to a user
       // by that name.
 
-      switch(msg.type) {
+      switch (msg.type) {
         // Public, textual message
         case "message":
           msg.name = connect.username;
-          msg.text = msg.text.replace(/(<([^>]+)>)/ig, "");
+          msg.text = msg.text.replace(/(<([^>]+)>)/gi, "");
           break;
 
         // Username change
@@ -336,7 +253,7 @@ wsServer.on('request', function(request) {
             var changeMsg = {
               id: msg.id,
               type: "rejectusername",
-              name: msg.name
+              name: msg.name,
             };
             connect.sendUTF(JSON.stringify(changeMsg));
           }
@@ -347,7 +264,7 @@ wsServer.on('request', function(request) {
           // but this is a demo. Don't do this in a real app.
           connect.username = msg.name;
           sendUserListToAll();
-          sendToClients = false;  // We already sent the proper responses
+          sendToClients = false; // We already sent the proper responses
           break;
       }
 
@@ -366,7 +283,7 @@ wsServer.on('request', function(request) {
         if (msg.target && msg.target !== undefined && msg.target.length !== 0) {
           sendToOneUser(msg.target, msgString);
         } else {
-          for (i=0; i<connectionArray.length; i++) {
+          for (i = 0; i < connectionArray.length; i++) {
             connectionArray[i].sendUTF(msgString);
           }
         }
@@ -376,9 +293,9 @@ wsServer.on('request', function(request) {
 
   // Handle the WebSocket "close" event; this means a user has logged off
   // or has been disconnected.
-  connection.on('close', function(reason, description) {
+  connection.on("close", function (reason, description) {
     // First, remove the connection from the list of connections.
-    connectionArray = connectionArray.filter(function(el, idx, ar) {
+    connectionArray = connectionArray.filter(function (el, idx, ar) {
       return el.connected;
     });
 
@@ -388,8 +305,8 @@ wsServer.on('request', function(request) {
 
     // Build and output log output for close information.
 
-    var logMessage = "Connection closed: " + connection.remoteAddress + " (" +
-                     reason;
+    var logMessage =
+      "Connection closed: " + connection.remoteAddress + " (" + reason;
     if (description !== null && description.length !== 0) {
       logMessage += ": " + description;
     }
