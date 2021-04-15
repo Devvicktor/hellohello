@@ -40,12 +40,6 @@ var clientID = 0;
 var mediaConstraints = {
   audio: true, // We want an audio track
   video: {
-    frameRate: 24,
-    width: {
-      min: 480,
-      max: 1280,
-      ideal: 720,
-    },
     aspectRatio: 1.333,
   },
 };
