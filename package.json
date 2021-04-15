@@ -1,0 +1,16 @@
+{
+  "name": "message",
+  "version": "1.0.0",
+  "description": "",
+  "main": "client.js",
+  "scripts": {
+    "postinstall": "cp node_modules/webrtc-adapter/out/adapter.js ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "webrtc-adapter": "^7.7.1",
+    "websocket": "^1.0.34"
+  }
+}
