@@ -8,7 +8,7 @@
   <link href="main.css" rel="stylesheet">
   <script type="text/javascript" src="client.js"></script>
   <script src="adapter.js"></script>
-  <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+
 </head>
 <body>
   <div class="container">
@@ -19,13 +19,13 @@
     <ul class="userlistbox"></ul>
     <div class="chatbox"></div>
     <div class="camerabox">
-
+      <video id="received_video" autoplay></video>
       <video id="local_video" autoplay muted></video>
       <button id="hangup-button" onclick="hangUpCall();" role="button" disabled>
         Hang Up
       </button>
     </div>
-    <div class="empty-container"><video id="received_video" autoplay></video></div>
+    <div class="empty-container"></div>
     <div class="chat-controls">
       Chat:<br/>
       <input id="text" type="text" name="text" size="100" maxlength="256" placeholder="Say something meaningful..." autocomplete="off" onkeyup="handleKey(event)" disabled>
