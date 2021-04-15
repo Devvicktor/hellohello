@@ -214,7 +214,7 @@ function handleWebRequest(req, res) {
       }
       if(req.url.indexOf('.js') != -1){ //req.url has the pathname, check if it conatins '.js'
 
-        fs.readFile(__dirname + '/adapter.js.js', function (err, data) {
+        fs.readFile(__dirname + '/adapter.js', function (err, data) {
           if (err) console.log(err);
           res.writeHead(200, {'Content-Type': 'text/javascript'});
           res.write(data);
@@ -223,7 +223,7 @@ function handleWebRequest(req, res) {
 
       }
 
-      if(req.url.indexOf('.css') != -1){ //req.url has the pathname, check if it conatins '.css'
+      if(req.url.indexOf('/main.css') != -1){ //req.url has the pathname, check if it conatins '.css'
 
         fs.readFile(__dirname + '/main.css', function (err, data) {
           if (err) console.log(err);
