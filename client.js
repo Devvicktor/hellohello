@@ -577,7 +577,9 @@ async function handleVideoOfferMsg(msg) {
 
     try {
       webcamStream.getTracks().forEach(
-        transceiver = track => myPeerConnection.addTransceiver(track, {streams: [webcamStream]})
+        transceiver = track => myPeerConnection.addTransceiver(track, {streams: [webcamStream]}),
+
+        console.log(transceiver.direction)
       );
     } catch(err) {
       handleGetUserMediaError(err);
