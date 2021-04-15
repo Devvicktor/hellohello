@@ -4,7 +4,8 @@
   "description": "",
   "main": "client.js",
   "scripts": {
-    "postinstall": "cp node_modules/webrtc-adapter/out/adapter.js ."
+    "postinstall": "cp node_modules/webrtc-adapter/out/adapter.js .",
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
