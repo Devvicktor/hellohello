@@ -242,8 +242,6 @@ async function createPeerConnection() {
   myPeerConnection.onsignalingstatechange = handleSignalingStateChangeEvent;
   myPeerConnection.onnegotiationneeded = handleNegotiationNeededEvent;
   myPeerConnection.ontrack = handleTrackEvent;
-  myPeerConnection.onaddstream = handleShowRemoteVideo;
-  myPeerConnection.onremovetrack = handleRemoveTrackEvent;
 }
 
 // Called by the WebRTC layer to let us know when it's time to
@@ -302,20 +300,7 @@ async function handleNegotiationNeededEvent() {
 // In our case, we're just taking the first stream found and attaching
 // it to the <video> element for incoming media.
 
-function handleTrackEvent(event) {
-  log("*** Track event");
-  document.getElementById("received_video").srcObject = event.streams[0];
-  document.getElementById("hangup-button").disabled = false;
-}
-//removal track
-function handleRemoveTrackEvent(event) {
-    var stream = document.getElementById("received_video").srcObject;
-    var trackList = stream.getTracks();
 
-    if (trackList.length == 0) {
-      closeVideoCall();
-    }
-  }
 
 // Handles |icecandidate| events by forwarding the specified
 // ICE candidate (created by our local ICE agent) to the other
@@ -560,41 +545,80 @@ async function invite(evt) {
 // create our RTCPeerConnection, get and attach our local camera
 // stream, then create and send an answer to the caller.
 
-function handleVideoOfferMsg(msg) {
-    var localStream = null;
+async function handleVideoOfferMsg(msg) {
+  targetUsername = msg.name;
 
-    targetUsername = msg.name;
+  // If we're not already connected, create an RTCPeerConnection
+  // to be linked to the caller.
+
+  log("Received video chat offer from " + targetUsername);
+  if (!myPeerConnection) {
     createPeerConnection();
-
-    var desc = new RTCSessionDescription(msg.sdp);
-
-    myPeerConnection.setRemoteDescription(desc).then(function () {
-      return navigator.mediaDevices.getUserMedia(mediaConstraints);
-    })
-    .then(function(stream) {
-      localStream = stream;
-      document.getElementById("local_video").srcObject = localStream;
-
-      localStream.getTracks().forEach(track => myPeerConnection.addTrack(track, localStream));
-    })
-    .then(function() {
-      return myPeerConnection.createAnswer();
-    })
-    .then(function(answer) {
-      return myPeerConnection.setLocalDescription(answer);
-    })
-    .then(function() {
-      var msg = {
-        name: myUsername,
-        target: targetUsername,
-        type: "video-answer",
-        sdp: myPeerConnection.localDescription
-      };
-
-      sendToServer(msg);
-    })
-    .catch(handleGetUserMediaError);
   }
+
+  // We need to set the remote description to the received SDP offer
+  // so that our local WebRTC layer knows how to talk to the caller.
+
+  var desc = new RTCSessionDescription(msg.sdp);
+
+  // If the connection isn't stable yet, wait for it...
+
+  if (myPeerConnection.signalingState != "stable") {
+    log("  - But the signaling state isn't stable, so triggering rollback");
+
+    // Set the local and remove descriptions for rollback; don't proceed
+    // until both return.
+    await Promise.all([
+      myPeerConnection.setLocalDescription({ type: "rollback" }),
+      myPeerConnection.setRemoteDescription(desc),
+    ]);
+    return;
+  } else {
+    log("  - Setting remote description");
+    await myPeerConnection.setRemoteDescription(desc);
+  }
+
+  // Get the webcam stream if we don't already have it
+
+  if (!webcamStream) {
+    try {
+      webcamStream = await navigator.mediaDevices.getUserMedia(
+        mediaConstraints
+      );
+    } catch (err) {
+      handleGetUserMediaError(err);
+      return;
+    }
+
+    document.getElementById("local_video").srcObject = webcamStream;
+
+    // Add the camera stream to the RTCPeerConnection
+
+    try {
+      webcamStream.getTracks().forEach(
+        (transceiver = (track) =>
+          myPeerConnection.addTransceiver(track, { streams: [webcamStream] })),
+
+        console.log(transceiver.direction)
+      );
+    } catch (err) {
+      handleGetUserMediaError(err);
+    }
+  }
+
+  log("---> Creating and sending answer to caller");
+
+  await myPeerConnection.setLocalDescription(
+    await myPeerConnection.createAnswer()
+  );
+
+  sendToServer({
+    name: myUsername,
+    target: targetUsername,
+    type: "video-answer",
+    sdp: myPeerConnection.localDescription,
+  });
+}
 //remote video
 
 
@@ -625,6 +649,12 @@ async function handleNewICECandidateMsg(msg) {
     reportError(err);
   }
 }
+//bsdhgshfghsdgfhdsgfhds
+function handleTrackEvent(event) {
+    log("*** Track event");
+    document.getElementById("received_video").srcObject = event.streams[0];
+    document.getElementById("hangup-button").disabled = false;
+  }
 
 // Handle errors which occur when trying to access the local media
 // hardware; that is, exceptions thrown by getUserMedia(). The two most
