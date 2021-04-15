@@ -535,7 +535,7 @@ async function invite(evt) {
       webcamStream = await navigator.mediaDevices.getUserMedia(
         mediaConstraints
       );
-      document.getElementById("received_video").srcObject = webcamStream;
+      document.getElementById("local_video").srcObject = webcamStream;
     } catch (err) {
       handleGetUserMediaError(err);
       return;
