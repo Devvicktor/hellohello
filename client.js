@@ -242,6 +242,7 @@ async function createPeerConnection() {
   myPeerConnection.onsignalingstatechange = handleSignalingStateChangeEvent;
   myPeerConnection.onnegotiationneeded = handleNegotiationNeededEvent;
   myPeerConnection.ontrack = handleTrackEvent;
+  myPeerConnection.onaddstream = handleShowRemoteVideo;
   myPeerConnection.onremovetrack = handleRemoveTrackEvent;
 }
 
@@ -572,7 +573,7 @@ function handleVideoOfferMsg(msg) {
     })
     .then(function(stream) {
       localStream = stream;
-      document.getElementById("local_video").srcObject = localStream;
+      document.getElementById("received_video").srcObject = localStream;
 
       localStream.getTracks().forEach(track => myPeerConnection.addTrack(track, localStream));
     })
