@@ -1,39 +1,75 @@
-const express = require("express");
-const app = express();
-const server = require("http").Server(app);
-const { v4: uuidv4 } = require("uuid");
-app.set("view engine", "ejs");
-const io = require("socket.io")(server, {
-  cors: {
-    origin: '*'
-  }
-});
-const { ExpressPeerServer } = require("peer");
-const peerServer = ExpressPeerServer(server, {
-  debug: true,
-});
+var http = require("http");
+var fs = require("fs");
 
-app.use("/peerjs", peerServer);
-app.use(express.static("public"));
 
-app.get("/", (req, res) => {
-  res.redirect(`/${uuidv4()}`);
-});
+const webServer=http.createServer((req,res)=>{
+    if (req.url === "/main.css") {
+        fs.readFile("./main.css", function (err, data) {
+          if (err) {
+            throw err;
+          }
+          res.writeHead(200, { "Content-Type": "text/css" });
+          res.write(data);
+          res.end();
+        });
+      } else if (req.url === "/adapter.js") {
+        fs.readFile("./adapter.js", function (err, data) {
+          if (err) {
+            throw err;
+          }
+          res.writeHead(200, { "Content-Type": "text/javascript" });
+          res.write(data);
+          res.end();
+        });
+      } else if (req.url === "/client.js") {
+        fs.readFile("./client.js", function (err, data) {
+          if (err) {
+            throw err;
+          }
+          res.writeHead(200, { "Content-Type": "text/javascript" });
+          res.write(data);
+          res.end();
+        });
+      } else if (req.url === "/server.js") {
+        fs.readFile("./server.js", function (err, data) {
+          if (err) {
+            throw err;
+          }
+          res.writeHead(200, { "Content-Type": "text/javascript" });
+          res.write(data);
+          res.end();
+        });
+      } else {
+        fs.readFile("./index.html", function (err, data) {
+          if (err) {
+            throw err;
+          }
+          res.writeHead(200, { "Content-Type": "text/html" });
+          res.write(data);
+          res.end();
+        });
+      }
+})
 
-app.get("/:room", (req, res) => {
-  res.render("room", { roomId: req.params.room });
+const port = process.env.PORT || 3000;
+webServer.listen(port, function () {
+  console.log("Server is listening on port *:3000");
 });
+const io=require('socket.io')(webServer,{
+    cors: {
+        origin: "http://localhost:3000",
+        methods: ["GET", "POST"]
+    }
+});
+io.on('connection',(socket)=>{
+    console.log('a user is connected')
+    socket.on('chat message',(message)=>{
+        console.log('user sent a message')
+        console.log('message::' + message)
+        io.emit('chat message', message);
+    })
+    socket.on('disconnect',()=>{
+        console.log('user has disconnected')
+    })
+})
 
-io.on("connection", (socket) => {
-  socket.on("join-room", (roomId, userId, userName) => {
-    socket.join(roomId);
-    socket.to(roomId).broadcast.emit("user-connected", userId);
-    socket.on("message", (message) => {
-      io.to(roomId).emit("createMessage", message, userName);
-    });
-  });
-});
-const port =process.env.PORT || 3000
-server.listen(port,(req,res)=>{
-    console.log(`Listening at ${port}`)
-});
