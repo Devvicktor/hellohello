@@ -5,12 +5,17 @@
   "main": "client.js",
   "scripts": {
     "postinstall": "cp node_modules/webrtc-adapter/out/adapter.js .",
-    "start": "node server.js"
+    "start": "nodemon server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "ejs": "^3.1.6",
+    "express": "^4.17.1",
+    "peer": "^0.6.1",
+    "socket.io": "^4.0.1",
+    "uuid": "^8.3.2",
     "webrtc-adapter": "^7.7.1",
     "websocket": "^1.0.34"
   }
