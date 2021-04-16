@@ -4,58 +4,101 @@ var http = require("http");
 var fs = require("fs");
 var WebSocketServer = require("websocket").server;
 
-const webServer = http.createServer(
-  (req, res) => {
-    if (req.url === "/main.css") {
-      fs.readFile("./main.css", function (err, data) {
-        if (err) {
-          throw err;
-        }
-        res.writeHead(200, { "Content-Type": "text/css" });
-        res.write(data);
-        res.end();
-      });
-    } else if (req.url === "/adapter.js") {
-      fs.readFile("./adapter.js", function (err, data) {
-        if (err) {
-          throw err;
-        }
-        res.writeHead(200, { "Content-Type": "text/javascript" });
-        res.write(data);
-        res.end();
-      });
-    } else if (req.url === "/client.js") {
-      fs.readFile("./client.js", function (err, data) {
-        if (err) {
-          throw err;
-        }
-        res.writeHead(200, { "Content-Type": "text/javascript" });
-        res.write(data);
-        res.end();
-      });
-    } else if (req.url === "/server.js") {
-      fs.readFile("./server.js", function (err, data) {
-        if (err) {
-          throw err;
-        }
-        res.writeHead(200, { "Content-Type": "text/javascript" });
-        res.write(data);
-        res.end();
-      });
-    } else {
-      fs.readFile("./index.html", function (err, data) {
-        if (err) {
-          throw err;
-        }
-        res.writeHead(200, { "Content-Type": "text/html" });
-        res.write(data);
-        res.end();
-      });
 
+const keyFilePath = "/etc/pki/tls/private/mdn-samples.mozilla.org.key";
+const certFilePath = "/etc/pki/tls/certs/mdn-samples.mozilla.org.crt";
+
+var httpsOptions = {
+    key: null,
+    cert: null
+  };
+
+  try {
+    httpsOptions.key = fs.readFileSync(keyFilePath);
+    try {
+      httpsOptions.cert = fs.readFileSync(certFilePath);
+    } catch(err) {
+      httpsOptions.key = null;
+      httpsOptions.cert = null;
+    }
+  } catch(err) {
+    httpsOptions.key = null;
+    httpsOptions.cert = null;
   }
 
-  //   res.end();
-  });
+  // If we were able to get the key and certificate files, try to
+  // start up an HTTPS server.
+
+  var webServer = null;
+
+  try {
+    if (httpsOptions.key && httpsOptions.cert) {
+      webServer = https.createServer(httpsOptions, handleWebRequest);
+    }
+  } catch(err) {
+    webServer = null;
+  }
+
+  if (!webServer) {
+    try {
+      webServer = http.createServer({}, handleWebRequest);
+    } catch(err) {
+      webServer = null;
+      log(`Error attempting to create HTTP(s) server: ${err.toString()}`);
+    }
+  }
+  function handleWebRequest(req, res) {
+    if (req.url === "/main.css") {
+        fs.readFile("./main.css", function (err, data) {
+          if (err) {
+            throw err;
+          }
+          res.writeHead(200, { "Content-Type": "text/css" });
+          res.write(data);
+          res.end();
+        });
+      } else if (req.url === "/adapter.js") {
+        fs.readFile("./adapter.js", function (err, data) {
+          if (err) {
+            throw err;
+          }
+          res.writeHead(200, { "Content-Type": "text/javascript" });
+          res.write(data);
+          res.end();
+        });
+      } else if (req.url === "/client.js") {
+        fs.readFile("./client.js", function (err, data) {
+          if (err) {
+            throw err;
+          }
+          res.writeHead(200, { "Content-Type": "text/javascript" });
+          res.write(data);
+          res.end();
+        });
+      } else if (req.url === "/server.js") {
+        fs.readFile("./server.js", function (err, data) {
+          if (err) {
+            throw err;
+          }
+          res.writeHead(200, { "Content-Type": "text/javascript" });
+          res.write(data);
+          res.end();
+        });
+      } else {
+        fs.readFile("./index.html", function (err, data) {
+          if (err) {
+            throw err;
+          }
+          res.writeHead(200, { "Content-Type": "text/html" });
+          res.write(data);
+          res.end();
+        });
+
+    }
+    log ("Received request for " + req.url);
+    res.writeHead(404);
+    res.end();
+  }
 const port = process.env.PORT || 6503;
 webServer.listen(port, function () {
   log("Server is listening on port 6503");
