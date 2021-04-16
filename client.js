@@ -239,6 +239,7 @@ async function createPeerConnection() {
   myPeerConnection.onicegatheringstatechange = handleICEGatheringStateChangeEvent;
   myPeerConnection.onsignalingstatechange = handleSignalingStateChangeEvent;
   myPeerConnection.onnegotiationneeded = handleNegotiationNeededEvent;
+  myPeerConnection.ontrack=handleTrackEvent;
 }
 //send any ice candidate to the other peer
 function handleICECandidateEvent(event) {
@@ -282,13 +283,11 @@ async function handleNegotiationNeededEvent() {
     reportError(err);
   }
 }
-myPeerConnection.ontrack=(event)=>{
-    remoteVideo=document.getElementById('remote_vdeo')
-    if(remoteVideo.srcObject){
-        remoteVideo.srcObject=event.streams[0]
-        document.getElementById("hangup-button").disabled = false;
-    }
-}
+function handleTrackEvent(event) {
+    log("*** Track event");
+    document.getElementById("received_video").srcObject = event.streams[0];
+    document.getElementById("hangup-button").disabled = false;
+  }
 function handleICEConnectionStateChangeEvent(event) {
   log(
     "*** ICE connection state changed to " + myPeerConnection.iceConnectionState
