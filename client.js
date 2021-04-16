@@ -431,28 +431,54 @@ async function invite(evt) {
     log("Setting up connection to invite user: " + targetUsername);
     createPeerConnection();
     navigator.getWebcam = (navigator.getUserMedia || navigator.webKitGetUserMedia || navigator.moxGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
-    try {
-      webcamStream = await navigator.mediaDevices.getUserMedia(
-        mediaConstraints
-      );
-      document.getElementById("local_video").srcObject = webcamStream;
-    } catch (err) {
-      handleGetUserMediaError(err);
-      return;
-    }
+    if (navigator.mediaDevices.getUserMedia) {
+        try {
+            webcamStream = await navigator.mediaDevices.getUserMedia(
+              mediaConstraints
+            );
+            document.getElementById("local_video").srcObject = webcamStream;
+          } catch (err) {
+            handleGetUserMediaError(err);
+            return;
+          }
 
 
-    try {
-      webcamStream
-        .getTracks()
-        .forEach(
-          (transceiver = (track) =>
-            myPeerConnection.addTransceiver(track, { streams: [webcamStream] }))
-        );
-    } catch (err) {
-      handleGetUserMediaError(err);
+          try {
+            webcamStream
+              .getTracks()
+              .forEach(
+                (transceiver = (track) =>
+                  myPeerConnection.addTransceiver(track, { streams: [webcamStream] }))
+              );
+          } catch (err) {
+            handleGetUserMediaError(err);
+          }
+
+    } else {
+        try {
+            webcamStream = await navigator.mediaDevices.getUserMedia(
+              mediaConstraints
+            );
+            document.getElementById("local_video").srcObject = webcamStream;
+          } catch (err) {
+            handleGetUserMediaError(err);
+            return;
+          }
+
+
+          try {
+            webcamStream
+              .getTracks()
+              .forEach(
+                (transceiver = (track) =>
+                  myPeerConnection.addTransceiver(track, { streams: [webcamStream] }))
+              );
+          } catch (err) {
+            handleGetUserMediaError(err);
+          }
+        }
     }
-  }
+
 }
 
 
