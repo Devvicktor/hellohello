@@ -63,11 +63,19 @@ const io=require('socket.io')(webServer,{
 });
 io.on('connection',(socket)=>{
     console.log('a user is connected')
-    socket.on('chat message',(message)=>{
+    socket.on('join-room',(roomId,userId,username)=>{
+
+      socket.join(roomId)
+      console.log('joined a room')
+      socket.to(roomId).broadcast.emit("user-connected", userId);
+       socket.on('chat message',(message)=>{
         console.log('user sent a message')
         console.log('message::' + message)
-        io.emit('chat message', message);
+        io.to(roomId).emit('chat message', message,username);
+        console.log('message is sent')
     })
+    })
+
     socket.on('disconnect',()=>{
         console.log('user has disconnected')
     })

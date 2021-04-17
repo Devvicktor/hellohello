@@ -20,7 +20,7 @@ showChat.addEventListener("click", () => {
 });
 
 const user = prompt("Enter your name");
-
+console.log('connected' ,user.value)
 var peer = new Peer(
   {
   host: "/",
