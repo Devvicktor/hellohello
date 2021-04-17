@@ -1,5 +1,4 @@
-
-const socket = io.connect('wss://messageithere.herokuapp.com/');
+const socket = io.connect("");
 const videoGrid = document.getElementById("video_grid");
 const myVideo = document.createElement("video");
 const showChat = document.querySelector("#show_chat");
@@ -22,10 +21,16 @@ showChat.addEventListener("click", () => {
 
 const user = prompt("Enter your name");
 
-var peer = new Peer(null, {
-  path: "/peerjs",
-  host: "/",
-  port: "443",
+var peer = new Peer({
+  path: "/",
+  host: "localhost",
+  port: 3000,
+  secure: false,
+  key: "peerjs",
+  debug: 3,
+  config: {
+    iceServers: [{ url: "stun:stun.l.google.com:19302" }],
+  },
 });
 
 let myVideoStream;
@@ -33,13 +38,12 @@ if (navigator.mediaDevices === undefined) {
   navigator.mediaDevices = {};
 }
 var getUserMedia =
-      navigator.getUserMedia ||
-      navigator.webkitGetUserMedia ||
-      navigator.mozGetUserMedia ||
-      navigator.msGetUserMedia;
+  navigator.getUserMedia ||
+  navigator.webkitGetUserMedia ||
+  navigator.mozGetUserMedia ||
+  navigator.msGetUserMedia;
 if (navigator.mediaDevices.getUserMedia === undefined) {
   navigator.mediaDevices.getUserMedia = function (constraints) {
-
     if (!getUserMedia) {
       return Promise.reject(
         new Error("getUserMedia is not implemented in this browser")
@@ -50,9 +54,15 @@ if (navigator.mediaDevices.getUserMedia === undefined) {
     });
   };
 }
-navigator.getWebcam = (navigator.getUserMedia || navigator.webKitGetUserMedia || navigator.moxGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
+navigator.getWebcam =
+  navigator.getUserMedia ||
+  navigator.webKitGetUserMedia ||
+  navigator.moxGetUserMedia ||
+  navigator.mozGetUserMedia ||
+  navigator.msGetUserMedia;
 if (navigator.mediaDevices.getUserMedia) {
-    navigator.mediaDevices.getUserMedia({  audio: true, video: true })
+  navigator.mediaDevices
+    .getUserMedia({ audio: true, video: true })
     .then(function (stream) {
       myVideoStream = stream;
       addVideoStream(myVideo, stream);
@@ -68,12 +78,14 @@ if (navigator.mediaDevices.getUserMedia) {
       socket.on("user-connected", (userId) => {
         connectToNewUser(userId, stream);
       });
-     })
-     .catch(function (e) { logError(e.name + ": " + e.message); });
-}
-else {
-navigator.getWebcam({ audio: true, video: true },
-     function (stream) {
+    })
+    .catch(function (e) {
+      logError(e.name + ": " + e.message);
+    });
+} else {
+  navigator.getWebcam(
+    { audio: true, video: true },
+    function (stream) {
       myVideoStream = stream;
       addVideoStream(myVideo, stream);
 
@@ -88,8 +100,11 @@ navigator.getWebcam({ audio: true, video: true },
       socket.on("user-connected", (userId) => {
         connectToNewUser(userId, stream);
       });
-     },
-     function () { logError("Web cam is not accessible."); });
+    },
+    function () {
+      logError("Web cam is not accessible.");
+    }
+  );
 }
 const connectToNewUser = (userId, stream) => {
   const call = peer.call(userId, stream);
@@ -107,25 +122,24 @@ const addVideoStream = (video, stream) => {
   video.srcObject = stream;
   video.addEventListener("loadedmetadata", () => {
     video.play();
-    videoGrid.append(video);
+    videos_grid.append(video);
   });
 };
 
-
 let send = document.getElementById("send_it");
 let messages = document.getElementById("messages");
-let input = document.getElementById('input');
+let input = document.getElementById("input");
 
-send.addEventListener('click', function(e) {
+send.addEventListener("click", function (e) {
   e.preventDefault();
   if (input.value) {
-    socket.emit('chat message', input.value);
-    input.value = '';
+    socket.emit("chat message", input.value);
+    input.value = "";
   }
 });
 
-socket.on('chat message', function(message) {
-  var item = document.createElement('li');
+socket.on("chat message", function (message) {
+  var item = document.createElement("li");
   item.textContent = message;
   messages.appendChild(item);
   window.scrollTo(0, document.body.scrollHeight);
