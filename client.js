@@ -1,4 +1,4 @@
-const socket = io.connect('ws://localhost:3000', {transports: ['websocket']});
+const socket = io.connect('ws://messageithere.herokuapp.com/', {transports: ['websocket']});
 const videoGrid = document.getElementById("video_grid");
 const myVideo = document.createElement("video");
 const showChat = document.querySelector("#show_chat");
