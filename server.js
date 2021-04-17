@@ -56,10 +56,10 @@ webServer.listen(port, function () {
   console.log("Server is listening on port *:3000");
 });
 const io=require('socket.io')(webServer,{
-    cors: {
-        origin: "http://localhost:3000",
-        methods: ["GET", "POST"]
-    }
+    // cors: {
+    //     origin: "http://localhost:3000",
+    //     methods: ["GET", "POST"]
+    // }
 });
 io.on('connection',(socket)=>{
     console.log('a user is connected')

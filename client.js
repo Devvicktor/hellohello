@@ -1,4 +1,4 @@
-const socket = io.connect("https://messageithere.herokuapp.com/");
+const socket = io.connect('ws://localhost:3000', {transports: ['websocket']});
 const videoGrid = document.getElementById("video_grid");
 const myVideo = document.createElement("video");
 const showChat = document.querySelector("#show_chat");
@@ -21,17 +21,18 @@ showChat.addEventListener("click", () => {
 
 const user = prompt("Enter your name");
 
-var peer = new Peer({
-  path: "/",
-  host: "https://messageithere.herokuapp.com/",
-  // port: process.env.PORT || 3000,
-  secure:true,
+var peer = new Peer(
+  {
+  host: "/",
+  port: 3000,
+  secure:false,
   key: "peerjs",
   debug: 3,
   config: {
     iceServers: [{ url: "stun:stun.l.google.com:19302" }],
   },
-});
+}
+);
 
 let myVideoStream;
 if (navigator.mediaDevices === undefined) {
@@ -138,12 +139,12 @@ send.addEventListener("click", function (e) {
   }
 });
 
-socket.on("chat message", function (message) {
-  var item = document.createElement("li");
-  item.textContent = message;
-  messages.appendChild(item);
-  window.scrollTo(0, document.body.scrollHeight);
-});
+// socket.on("chat message", function (message) {
+//   var item = document.createElement("li");
+//   item.textContent = message;
+//   messages.appendChild(item);
+//   window.scrollTo(0, document.body.scrollHeight);
+// });
 
 input.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && input.value.length !== 0) {
@@ -192,7 +193,7 @@ inviteButton.addEventListener("click", (e) => {
   );
 });
 
-socket.on("createMessage", (message, userName) => {
+socket.on("chat message", (message, userName) => {
   messages.innerHTML =
     messages.innerHTML +
     `<div class="message">
