@@ -23,9 +23,9 @@ const user = prompt("Enter your name");
 
 var peer = new Peer({
   path: "/",
-  host: "localhost",
+  host: "https://messageithere.herokuapp.com/",
   port: 3000,
-  secure: false,
+  secure:true,
   key: "peerjs",
   debug: 3,
   config: {
