@@ -13,12 +13,13 @@
 	font-family: "Poppins", sans-serif;
 }
 .header {
-    display: flex;
+    /* display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: center; */
     height: 8vh;
     position: relative;
     width: 100%;
+	color: var(--main-light);
     background-color: var(--main-darklg);
 }
 .main {
