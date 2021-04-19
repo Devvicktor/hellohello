@@ -1,80 +1,69 @@
-var http = require("http");
-var fs = require("fs");
-
-const webServer = http.createServer((req, res) => {
-  if (req.url === "/main.css") {
-    fs.readFile("./main.css", function (err, data) {
-      if (err) {
-        throw err;
-      }
-      res.writeHead(200, { "Content-Type": "text/css" });
-      res.write(data);
-      res.end();
-    });
-  } else if (req.url === "/adapter.js") {
-    fs.readFile("./adapter.js", function (err, data) {
-      if (err) {
-        throw err;
-      }
-      res.writeHead(200, { "Content-Type": "text/javascript" });
-      res.write(data);
-      res.end();
-    });
-  } else if (req.url === "/client.js") {
-    fs.readFile("./client.js", function (err, data) {
-      if (err) {
-        throw err;
-      }
-      res.writeHead(200, { "Content-Type": "text/javascript" });
-      res.write(data);
-      res.end();
-    });
-  } else if (req.url === "/server.js") {
-    fs.readFile("./server.js", function (err, data) {
-      if (err) {
-        throw err;
-      }
-      res.writeHead(200, { "Content-Type": "text/javascript" });
-      res.write(data);
-      res.end();
-    });
-  } else {
-    fs.readFile("./index.html", function (err, data) {
-      if (err) {
-        throw err;
-      }
-      res.writeHead(200, { "Content-Type": "text/html" });
-      res.write(data);
-      res.end();
-    });
-  }
-});
+const http = require("http");
+const path=require('path')
+const express =require('express')
+const formatMessage=require('./utils/messages')
+const {userJoin,getCurrentUser,userLeave,
+  getRoomUsers }=require('./utils/users')
+const socketio=require('socket.io')
+const app=express()
 
 const port = process.env.PORT || 3000;
+const webServer=http.createServer(app)
+  //server files
+app.use(express.static(path.join(__dirname,'public')))
+
 webServer.listen(port, function () {
   console.log("Server is listening on port *:3000");
 });
-const io = require("socket.io")(webServer, {
-  // cors: {
-  //     origin: "http://localhost:3000",
-  //     methods: ["GET", "POST"]
-  // }
-});
-io.on("connection", (socket) => {
-  console.log("a user is connected");
-  socket.on("join-room", (roomId, userId, username) => {
-    socket.join(roomId);
-    console.log("joined a room");
-    socket.to(roomId).broadcast.emit("user-connected", userId);
-    socket.on("chat message", (message) => {
-      console.log("user sent a message");
-      console.log("message::" + message);
-      io.to(roomId).emit("chat message", message, username);
-      console.log("message is sent");
-    });
-  });
+//initialize socket io
+const io= socketio(webServer)
 
-  socket.on("disconnect", () => {
-    console.log("user has disconnected");
+const botName='Zetialpha Bot'
+io.on("connection", (socket) => {
+  socket.on('joinRoom',({username,room})=>{
+    const user=userJoin(socket.id,username,room)
+    socket.join(user.room)
+    //welcome urrent user
+      socket.emit('message',formatMessage(botName,'welcome to Zetialpha!'))
+      //broadcast when a user connects
+     socket.broadcast.to(user.room).emit('message',formatMessage(botName,`${user.username}has joined chat` ))
+  io.to(user.room).emit('roomUsers',{
+    room:user.room,
+    users:getRoomUsers(user.room)
+  })
+    })
+
+    socket.on("usertyping", (msg) => {
+    socket.broadcast.emit('usertyping',msg)
   });
+  //listen to chat message
+  socket.on("chatMessage", (msg) => {
+    const user=getCurrentUser(socket.id)
+      io.to(user.room).emit("message", formatMessage(user.username,msg) );
+    });
+
+//when a user disconects
+  socket.on('disconnect',()=>{
+    const user=userLeave(socket.id)
+    if(user){
+      io.to(user.room).emit('message',formatMessage(botName,`${user.username}has left the chat`))
+      io.to(user.room).emit('roomUsers',{
+        room:user.room,
+        users:getRoomUsers(user.room)
+      })
+    }
+
+  })
+    // Listen to WebcamOn
+    socket.on('webcam-on', () =>{
+      const user=getCurrentUser(socket.id)
+      user.cam = true;
+      io.to(user.room).emit('add-webcam-icon', user.id)
+  })
+
+  // Listen to webcamOff
+  socket.on('webcam-off', () =>{
+      user.cam = false
+      io.to(user.room).emit('remove-webcam-icon-stream-called', user.id)
+  })
 });
