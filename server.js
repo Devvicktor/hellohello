@@ -54,16 +54,5 @@ io.on("connection", (socket) => {
     }
 
   })
-    // Listen to WebcamOn
-    socket.on('webcam-on', () =>{
-      const user=getCurrentUser(socket.id)
-      user.cam = true;
-      io.to(user.room).emit('add-webcam-icon', user.id)
-  })
 
-  // Listen to webcamOff
-  socket.on('webcam-off', () =>{
-      user.cam = false
-      io.to(user.room).emit('remove-webcam-icon-stream-called', user.id)
-  })
 });

@@ -8,7 +8,7 @@ const { username, room } = Qs.parse(location.search, {
   ignoreQueryPrefix: true,
 });
 
-const socket = io();
+const socket = io("/");
 
 // Join chatroom
 socket.emit('joinRoom', { username, room });
@@ -97,40 +97,33 @@ document.getElementById('leave-btn').addEventListener('click', () => {
 video calling
 ==============================*/
 //init peerjs
-const peer=new Peer({
-  path: "/peerjs",
+const myPeer=new Peer({
   host: "/",
-  port: "3000",
+  port: "3001",
 })
+//video
+const videoGrid=document.getElementById('video-grid')
 //get to call on click
 const myVideo=document.createElement('video')
 myVideo.muted=true
 
-const callButton=document.getElementById('video-btn')
-
-callButton.addEventListener('click',()=>{
-initiateCall()
-socket.emit('webcam-on')
+vidBtn=document.getElementById('video-btn')
+vidBtn.addEventListener('click',()=>{
+  startCall()
+  myPeer.on('open',username=>{
+  socket.emit('joinRoom',room,username)
 })
-function initiateCall(){
-  let myVideostream;
+})
+function startCall(){
   navigator.getWebcam = (navigator.getUserMedia || navigator.webKitGetUserMedia || navigator.moxGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
 if (navigator.mediaDevices.getUserMedia) {
     navigator.mediaDevices.getUserMedia({  audio: true, video: true })
     .then(function (stream) {
                   //Display the video stream in the video object
-          myVideostream=stream;
-          addVideostream(myVideo,stream)
-          peer.on("call", (call) => {
-            call.answer(stream);
-            const video = document.createElement("video");
-            call.on("stream", (userVideoStream) => {
-              addVideoStream(video, userVideoStream);
-            });
-          });
-          socket.on("user-connected", (userId) => {
-            connectToNewUser(userId, stream);
-          });
+                  addvideostream(myVideo,stream)
+                  socket.on('connected',username=>{
+                    connectToNewUser(username,stream)
+                  })
      })
      .catch(function (e) { logError(e.name + ": " + e.message); });
 }
@@ -138,34 +131,29 @@ else {
 navigator.getWebcam({ audio: true, video: true },
      function (stream) {
              //Display the video stream in the video object
-             myVideostream=stream;
-             addVideostream(myVideo,stream)
-             peer.on("call", (call) => {
-               call.answer(stream);
-               const video = document.createElement("video");
-               call.on("stream", (userVideoStream) => {
-                 addVideoStream(video, userVideoStream);
-               });
-             });
-             socket.on("user-connected", (userId) => {
-               connectToNewUser(userId, stream);
-             });
+             addvideostream(myVideo,stream)
+             socket.on('connected',username=>{
+              connectToNewUser(username,stream)
+            })
      },
      function () { logError("Web cam is not accessible."); });
 }
-
 }
-const connectToNewUser = (userId, stream) => {
-  const call = peer.call(userId, stream);
-  const video = document.createElement("video");
-  call.on("stream", (userVideoStream) => {
-    addVideoStream(video, userVideoStream);
-  });
-};
-const addVideoStream=(video,stream)=>{
-  video.srcObject = stream;
-  video.addEventListener("loadedmetadata", () => {
-    video.play();
-    videoGrid.append(video);
-  });
+
+
+// addvideostream
+function addvideostream(video,stream){
+  video.srcObject=stream;
+  video.addEventListener('loadedmetadata',()=>{
+    video.play()
+  })
+  videoGrid.append(video)
+}
+function connectToNewUser(username,stream){
+  const call=myPeer.call(username,stream)
+  const video=document.createElement('video')
+  call.on('close',()=>{
+    video.remove()
+  })
+
 }
