@@ -7,13 +7,13 @@ const {userJoin,getCurrentUser,userLeave,
 const socketio=require('socket.io')
 const app=express()
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 const webServer=http.createServer(app)
   //server files
 app.use(express.static(path.join(__dirname,'public')))
 
 webServer.listen(port, function () {
-  console.log("Server is listening on port *:3000");
+  console.log("Server is listening on port *:3001");
 });
 //initialize socket io
 const io= socketio(webServer)
